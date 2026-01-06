@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ตรวจโรคข้าว</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+</head>
+<body>
+
+<h2>ผลการวินิจฉัยโรคข้าว</h2>
+<img id="riceImage" width="300">
+<div id="result"></div>
+
+<script>
+const modelURL = "https://teachablemachine.withgoogle.com/models/amAoOP4xYM/";
+let model;
+
+async function loadModel() {
+  model = await tmImage.load(
+    modelURL + "model.json",
+    modelURL + "metadata.json"
+  );
+}
+
+async function predict(imgUrl) {
+  const img = document.getElementById("riceImage");
+  img.crossOrigin = "anonymous";
+  img.src = imgUrl;
+  await img.decode();
+
+  const prediction = await model.predict(img);
+  prediction.sort((a,b)=>b.probability-a.probability);
+
+  document.getElementById("result").innerHTML =
+    "โรคที่ตรวจพบ: <b>" +
+    prediction[0].className +
+    "</b><br>ความมั่นใจ: " +
+    (prediction[0].probability*100).toFixed(2) + "%";
+}
+
+loadModel().then(()=>{
+  const params = new URLSearchParams(window.location.search);
+  const imgUrl = params.get("img");
+  if(imgUrl) predict(imgUrl);
+});
+</script>
+
+</body>
+</html>
